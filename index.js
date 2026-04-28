@@ -12,16 +12,7 @@ function json(data, status = 200) {
 }
 
 async function initDB(db) {
-  await db.exec(`
-    CREATE TABLE IF NOT EXISTS registrations (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      manager_name TEXT NOT NULL,
-      school_name TEXT NOT NULL,
-      track_id TEXT NOT NULL,
-      track_name TEXT NOT NULL,
-      created_at TEXT NOT NULL
-    );
-  `);
+  await db.prepare(`CREATE TABLE IF NOT EXISTS registrations (id INTEGER PRIMARY KEY AUTOINCREMENT, manager_name TEXT NOT NULL, school_name TEXT NOT NULL, track_id TEXT NOT NULL, track_name TEXT NOT NULL, created_at TEXT NOT NULL)`).run();
 }
 
 export default {
@@ -63,7 +54,6 @@ export default {
         return json({ error: 'missing fields' }, 400);
       }
 
-      // בדיקת מגמה מלאה
       const { results: countRes } = await env.DB.prepare(
         `SELECT COUNT(*) as count FROM registrations WHERE track_id = ?`
       ).bind(track_id).all();
@@ -73,16 +63,15 @@ export default {
       }
 
       await env.DB.prepare(
-        `INSERT INTO registrations (manager_name, school_name, track_id, track_name, created_at)
-         VALUES (?, ?, ?, ?, ?)`
+        `INSERT INTO registrations (manager_name, school_name, track_id, track_name, created_at) VALUES (?, ?, ?, ?, ?)`
       ).bind(manager_name, school_name, track_id, track_name, new Date().toISOString()).run();
 
       return json({ ok: true });
     }
 
-    // DELETE /admin/reset — איפוס (להסיר בפרודקשן)
+    // DELETE /admin/reset — איפוס
     if (request.method === 'DELETE' && url.pathname === '/admin/reset') {
-      await env.DB.exec(`DELETE FROM registrations`);
+      await env.DB.prepare(`DELETE FROM registrations`).run();
       return json({ ok: true });
     }
 
