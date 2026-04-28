@@ -162,6 +162,26 @@ header p{color:var(--muted);font-size:1.05rem}
 .td-time{color:#aab8c8;font-size:.75rem;white-space:nowrap}
 .empty-track{text-align:center;padding:16px;color:var(--muted);font-size:.85rem}
 
+/* ── COMPACT GRID VIEW ── */
+.grid-table{width:100%;border-collapse:collapse;background:var(--surface);border-radius:16px;overflow:hidden;box-shadow:var(--shadow);border:1px solid var(--border)}
+.grid-table th{
+  background:linear-gradient(135deg,var(--blue-dk),var(--blue));
+  color:#fff;font-size:.8rem;font-weight:800;
+  padding:12px 10px;text-align:center;border-left:1px solid rgba(255,255,255,.15);
+}
+.grid-table th:last-child{border-left:none}
+.grid-table th .th-emoji{display:block;font-size:1.2rem;margin-bottom:3px}
+.grid-table td{
+  padding:8px 10px;font-size:.82rem;color:var(--text);text-align:center;
+  border-bottom:1px solid #f0f5fb;border-left:1px solid #f0f5fb;vertical-align:top;
+}
+.grid-table td:last-child{border-left:none}
+.grid-table tr:last-child td{border-bottom:none}
+.grid-table tr:nth-child(even) td{background:#fafcff}
+.grid-cell-name{font-weight:700;display:block;margin-bottom:2px}
+.grid-cell-school{font-size:.72rem;color:var(--muted)}
+.grid-col-full th{background:linear-gradient(135deg,#c0392b,#e63757)!important}
+
 /* print button */
 .print-btn{
   background:var(--surface);border:1.5px solid var(--blue);color:var(--blue);
@@ -253,9 +273,11 @@ header p{color:var(--muted);font-size:1.05rem}
     <div style="text-align:left;margin-bottom:16px;display:flex;gap:8px;align-items:center">
       <button class="print-btn" onclick="showPage('register')" style="border-color:var(--muted);color:var(--muted)">← חזרה לרישום</button>
       <button class="print-btn" onclick="window.print()">🖨️ הדפסה / PDF</button>
+      <button class="print-btn" id="toggleViewBtn" onclick="toggleReportView()" style="margin-right:auto;background:var(--blue);color:#fff;border-color:var(--blue)">⊞ תצוגה מצומצת</button>
     </div>
 
     <div id="reportCards"></div>
+    <div id="reportGrid" style="display:none"></div>
   </div>
 </div>
 
@@ -414,18 +436,22 @@ async function loadAll() {
       fetch(API + '/counts'),
       fetch(API + '/report'),
     ]);
-    const cData = await cRes.json();
-    const rData = await rRes.json();
+
+    const cData = await cRes.json().catch(() => ({}));
+    const rData = await rRes.json().catch(() => ({}));
+
+    if (!cRes.ok) throw new Error(cData.error || 'counts failed');
+    if (!rRes.ok) throw new Error(rData.error || 'report failed');
 
     counts = {};
-    (cData.counts || []).forEach(r => { counts[r.track_id] = r.count; });
+    (cData.counts || []).forEach(r => { counts[r.track_id] = Number(r.count || 0); });
     allRegistrations = rData.registrations || [];
 
     applyCountsToCards();
     renderRecents();
     renderReport();
-  } catch {
-    console.warn('לא ניתן לטעון נתונים');
+  } catch (err) {
+    console.warn('לא ניתן לטעון נתונים:', err);
   }
 }
 
@@ -476,14 +502,69 @@ function renderReport() {
   }).join('');
 }
 
+/* ── REPORT VIEW TOGGLE ── */
+let reportViewMode = 'detailed'; // 'detailed' | 'grid'
+
+function toggleReportView() {
+  reportViewMode = reportViewMode === 'detailed' ? 'grid' : 'detailed';
+  const btn = document.getElementById('toggleViewBtn');
+  if (reportViewMode === 'grid') {
+    document.getElementById('reportCards').style.display = 'none';
+    document.getElementById('reportGrid').style.display = '';
+    renderReportGrid();
+    btn.textContent = '☰ תצוגה מפורטת';
+  } else {
+    document.getElementById('reportCards').style.display = '';
+    document.getElementById('reportGrid').style.display = 'none';
+    btn.textContent = '⊞ תצוגה מצומצת';
+  }
+}
+
+function renderReportGrid() {
+  const activeTracks = TRACKS.filter(t => (counts[t.id] || 0) > 0);
+  if (!activeTracks.length) {
+    document.getElementById('reportGrid').innerHTML = '<p style="text-align:center;color:var(--muted);padding:32px">אין רישומים עדיין</p>';
+    return;
+  }
+
+  // כמה שורות צריך (המגמה עם הכי הרבה נרשמים)
+  const maxRows = Math.max(...activeTracks.map(t => allRegistrations.filter(r => r.track_id === t.id).length));
+
+  const headers = activeTracks.map(t => {
+    const n = counts[t.id] || 0;
+    const isFull = n >= MAX;
+    return `<th class="${isFull ? 'grid-col-full' : ''}">
+      <span class="th-emoji">${t.emoji}</span>
+      ${t.name}<br><small style="font-weight:500;opacity:.85">${n}/${MAX}</small>
+    </th>`;
+  }).join('');
+
+  const rows = Array.from({length: maxRows}, (_, i) => {
+    const cells = activeTracks.map(t => {
+      const members = allRegistrations.filter(r => r.track_id === t.id);
+      const m = members[i];
+      return m
+        ? `<td><span class="grid-cell-name">${m.manager_name}</span><span class="grid-cell-school">🏫 ${m.school_name}</span></td>`
+        : `<td style="color:#dde4ee">—</td>`;
+    }).join('');
+    return `<tr>${cells}</tr>`;
+  }).join('');
+
+  document.getElementById('reportGrid').innerHTML = `
+    <div style="overflow-x:auto">
+      <table class="grid-table">
+        <thead><tr>${headers}</tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+}
+
 /* ── PAGE SWITCHING ── */
 function showPage(p) {
   document.getElementById('page-register').style.display = p === 'register' ? 'block' : 'none';
   document.getElementById('page-report').style.display = p === 'report' ? 'block' : 'none';
   if (p === 'report') {
-    loadAll().then(() => {
-      renderReport();
-    }).catch(() => {
+    loadAll().catch(() => {
       toast('שגיאה בטעינת הדוח', 'err');
     });
   }
@@ -510,7 +591,7 @@ async function resetApp() {
     toast('כל הנתונים אופסו בהצלחה ✨', 'ok');
   } catch (err) {
     console.error(err);
-    toast('האיפוס נכשל – בדקו שה-Worker תומך ב-/reset', 'err');
+    toast('האיפוס נכשל – ' + (err.message || 'שגיאה לא ידועה'), 'err');
   }
 }
 
