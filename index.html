@@ -496,7 +496,7 @@ function showPage(p) {
 async function resetApp() {
   if (!confirm('האם לאפס את כל הרישומים והנתונים?')) return;
   try {
-    const res = await fetch(API + '/reset', { method: 'POST' });
+    const res = await fetch(API + '/admin/reset', { method: 'DELETE' });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.error || 'Reset failed');
 
