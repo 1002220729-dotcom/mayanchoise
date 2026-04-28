@@ -1,0 +1,8 @@
+name = "tracks-worker"
+main = "index.js"
+compatibility_date = "2024-01-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "mayanchoice"
+database_id = "4df20de2-f1ad-48ee-8859-90d9477c45c1"

@@ -1,0 +1,477 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>בחירת מגמות למנהלים</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700;800;900&display=swap" rel="stylesheet">
+<style>
+/* ── TOKENS ── */
+:root {
+  --bg:       #f4f7fb;
+  --surface:  #ffffff;
+  --border:   rgba(25,85,145,.11);
+  --text:     #17324d;
+  --muted:    #5f7891;
+  --blue:     #1f8fff;
+  --blue-dk:  #156ed1;
+  --teal:     #20c7b3;
+  --red:      #e63757;
+  --shadow:   0 10px 36px rgba(31,82,130,.10);
+  --r:        18px;
+}
+
+/* ── RESET ── */
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Heebo',sans-serif}
+body{background:var(--bg);color:var(--text);min-height:100vh}
+
+/* subtle grid bg */
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:linear-gradient(rgba(31,143,255,.03) 1px,transparent 1px),
+                   linear-gradient(90deg,rgba(31,143,255,.03) 1px,transparent 1px);
+  background-size:48px 48px;
+}
+
+/* ── LAYOUT ── */
+.app{position:relative;z-index:1;max-width:960px;margin:0 auto;padding:32px 20px 60px}
+
+/* ── HEADER ── */
+header{text-align:center;margin-bottom:32px}
+header h1{font-size:clamp(1.8rem,4vw,2.8rem);font-weight:900;color:var(--text);letter-spacing:-.02em;margin-bottom:6px}
+header p{color:var(--muted);font-size:1.05rem}
+.divider{height:1px;background:linear-gradient(to left,transparent,rgba(31,143,255,.2),transparent);margin:18px auto 0;max-width:300px}
+
+/* ── TABS ── */
+.tabs{display:flex;gap:8px;justify-content:center;margin-bottom:28px}
+.tab{padding:10px 28px;border-radius:50px;border:1px solid var(--border);background:var(--surface);color:var(--muted);font-weight:700;font-size:.9rem;cursor:pointer;transition:.2s}
+.tab.active{background:var(--blue);color:#fff;border-color:var(--blue);box-shadow:0 4px 14px rgba(31,143,255,.3)}
+
+/* ── PANEL ── */
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:24px;margin-bottom:24px;box-shadow:var(--shadow)}
+
+/* ── FORM ── */
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.fg label{display:block;font-weight:700;font-size:.88rem;margin-bottom:6px;color:var(--text)}
+.fg input{width:100%;height:48px;border-radius:12px;border:1px solid var(--border);background:#f8fafd;padding:0 14px;font-size:.95rem;color:var(--text);transition:.2s}
+.fg input::placeholder{color:#aab8c8}
+.fg input:focus{outline:none;border-color:rgba(31,143,255,.5);background:#fff;box-shadow:0 0 0 3px rgba(31,143,255,.1)}
+
+/* ── TRACKS GRID ── */
+.tracks{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:24px}
+.card{background:linear-gradient(160deg,#fff,#f4f8ff);border:1.5px solid var(--border);border-radius:16px;padding:16px 10px;text-align:center;cursor:pointer;position:relative;overflow:hidden;transition:transform .2s,box-shadow .2s,border-color .2s}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--blue),var(--teal))}
+.card:hover:not(.locked){transform:translateY(-3px);box-shadow:0 12px 28px rgba(31,130,82,.12);border-color:rgba(31,143,255,.3)}
+.card.selected{border-color:var(--blue);box-shadow:0 0 0 3px rgba(31,143,255,.18),0 10px 24px rgba(31,130,255,.12)}
+.card.locked{opacity:.45;cursor:not-allowed}
+.card-icon{font-size:2rem;margin-bottom:8px;display:block}
+.card h3{font-size:.75rem;font-weight:800;color:var(--text);margin-bottom:10px;line-height:1.3}
+.prog{width:100%;height:5px;background:#dce9f7;border-radius:99px;overflow:hidden;margin-bottom:5px}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--teal));border-radius:99px;transition:width .5s ease}
+.prog-fill.full{background:linear-gradient(90deg,#e63757,#ff6b6b)}
+.card-count{font-size:.7rem;font-weight:700;color:var(--muted)}
+.card-full-badge{position:absolute;top:8px;left:8px;background:#e63757;color:#fff;font-size:.6rem;font-weight:800;padding:2px 6px;border-radius:6px}
+
+/* ── SUBMIT BTN ── */
+.submit-wrap{text-align:center}
+.btn{background:linear-gradient(135deg,var(--blue-dk),var(--blue));color:#fff;border:none;border-radius:12px;padding:14px 40px;font-size:1rem;font-weight:800;cursor:pointer;transition:.25s;letter-spacing:.01em}
+.btn:hover:not(:disabled){box-shadow:0 6px 20px rgba(31,143,255,.35);transform:translateY(-1px)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+
+/* ── RECENTS ── */
+.recents-title{font-size:.82rem;font-weight:700;color:var(--muted);margin-bottom:8px}
+.rec-item{background:#f6f9fd;border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:.82rem;color:var(--text);margin-bottom:6px}
+.rec-item strong{font-weight:800}
+.rec-track{color:var(--blue);font-weight:700}
+
+/* ── TOAST ── */
+#toast-wrap{position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{padding:12px 22px;border-radius:12px;font-size:.88rem;font-weight:700;animation:toastIn .35s ease;box-shadow:0 6px 20px rgba(0,0,0,.12)}
+.toast.ok{background:#d1fae5;color:#065f46}
+.toast.err{background:#fee2e2;color:#991b1b}
+@keyframes toastIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+
+/* ═══════════════════════════════════════
+   REPORT PAGE
+═══════════════════════════════════════ */
+#page-report{display:none}
+
+.report-hero{
+  text-align:center;
+  background:linear-gradient(135deg,var(--blue-dk),var(--blue) 50%,var(--teal));
+  color:#fff;border-radius:20px;padding:36px 24px 32px;margin-bottom:28px;
+  position:relative;overflow:hidden;
+}
+.report-hero::before{
+  content:'';position:absolute;inset:0;
+  background-image:radial-gradient(circle at 80% 20%,rgba(255,255,255,.12) 0%,transparent 50%),
+                   radial-gradient(circle at 20% 80%,rgba(255,255,255,.08) 0%,transparent 40%);
+}
+.report-hero h2{font-size:1.9rem;font-weight:900;margin-bottom:6px;position:relative}
+.report-hero p{font-size:1rem;opacity:.85;position:relative}
+.report-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:20px;position:relative}
+.stat-pill{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.25);border-radius:12px;padding:14px 10px;text-align:center}
+.stat-pill .num{font-size:1.8rem;font-weight:900;display:block}
+.stat-pill .lbl{font-size:.75rem;opacity:.85;font-weight:600}
+
+/* track report card */
+.track-report{margin-bottom:18px;background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:var(--shadow)}
+.track-report-header{
+  display:flex;align-items:center;gap:14px;padding:16px 20px;
+  border-bottom:1px solid var(--border);
+}
+.track-report-header .icon{font-size:1.7rem;line-height:1}
+.track-report-header .info{flex:1}
+.track-report-header h3{font-size:1rem;font-weight:800;color:var(--text)}
+.track-report-header p{font-size:.8rem;color:var(--muted);margin-top:2px}
+.track-badge{
+  padding:5px 14px;border-radius:50px;font-size:.78rem;font-weight:800;
+  background:#e0f0ff;color:var(--blue-dk);
+}
+.track-badge.full{background:#fee2e2;color:#991b1b}
+.track-prog-wrap{padding:0 20px 0;margin-bottom:0}
+.track-prog-bar{height:6px;background:#eef4fb;border-radius:99px;overflow:hidden;margin:10px 0}
+.track-prog-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--blue),var(--teal));transition:width .8s ease}
+.track-prog-fill.full{background:linear-gradient(90deg,#e63757,#ff6b6b)}
+
+.managers-list{padding:12px 20px 16px}
+.manager-row{
+  display:flex;align-items:center;gap:12px;
+  padding:10px 0;border-bottom:1px solid #f0f5fb;
+}
+.manager-row:last-child{border-bottom:none}
+.manager-num{
+  width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--teal));
+  color:#fff;font-size:.75rem;font-weight:800;display:grid;place-items:center;flex-shrink:0;
+}
+.manager-name{font-weight:800;font-size:.9rem;color:var(--text);flex:1}
+.manager-school{font-size:.8rem;color:var(--muted)}
+.manager-time{font-size:.72rem;color:#aab8c8}
+.empty-track{text-align:center;padding:18px;color:var(--muted);font-size:.85rem}
+
+/* print button */
+.print-btn{
+  background:var(--surface);border:1.5px solid var(--blue);color:var(--blue);
+  border-radius:10px;padding:10px 22px;font-size:.88rem;font-weight:800;cursor:pointer;
+  transition:.2s;margin-left:8px;
+}
+.print-btn:hover{background:var(--blue);color:#fff}
+
+@media print{
+  .tabs,.print-btn,.btn,#toast-wrap{display:none!important}
+  .track-report{break-inside:avoid;margin-bottom:12px}
+  .report-hero{background:#17324d!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+@media(max-width:700px){
+  .tracks{grid-template-columns:repeat(2,1fr)}
+  .form-row{grid-template-columns:1fr}
+  .report-stats{grid-template-columns:repeat(3,1fr)}
+}
+@media(max-width:480px){
+  .tracks{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+<div id="toast-wrap"></div>
+
+<div class="app">
+  <header>
+    <h1>🎓 בחירת מגמות למנהלים</h1>
+    <p>בחרו את המגמה המועדפת עליכם</p>
+    <div class="divider"></div>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" onclick="showPage('register')">📝 רישום</button>
+    <button class="tab" onclick="showPage('report')">📊 דוח חלוקה</button>
+  </div>
+
+  <!-- ═══ REGISTER PAGE ═══ -->
+  <div id="page-register">
+    <div class="panel">
+      <div class="form-row">
+        <div class="fg">
+          <label>שם המנהל/ת</label>
+          <input id="managerName" type="text" placeholder="הכניסו את שמכם המלא">
+        </div>
+        <div class="fg">
+          <label>שם בית הספר</label>
+          <input id="schoolName" type="text" placeholder="הכניסו את שם בית הספר">
+        </div>
+      </div>
+    </div>
+
+    <div class="tracks" id="tracksGrid"></div>
+
+    <div class="submit-wrap" style="margin-bottom:28px">
+      <button class="btn" id="submitBtn" disabled>שליחת הבחירה</button>
+    </div>
+
+    <div id="recentsSection" style="display:none">
+      <p class="recents-title">רישומים אחרונים</p>
+      <div id="recentsList"></div>
+    </div>
+  </div>
+
+  <!-- ═══ REPORT PAGE ═══ -->
+  <div id="page-report">
+    <div class="report-hero">
+      <h2>📊 דוח חלוקת מגמות</h2>
+      <p id="reportDate"></p>
+      <div class="report-stats">
+        <div class="stat-pill"><span class="num" id="statTotal">—</span><span class="lbl">מנהלים נרשמו</span></div>
+        <div class="stat-pill"><span class="num" id="statFull">—</span><span class="lbl">מגמות מלאות</span></div>
+        <div class="stat-pill"><span class="num" id="statOpen">—</span><span class="lbl">מגמות פתוחות</span></div>
+      </div>
+    </div>
+
+    <div style="text-align:left;margin-bottom:16px">
+      <button class="print-btn" onclick="window.print()">🖨️ הדפסה / PDF</button>
+    </div>
+
+    <div id="reportCards"></div>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════
+   CONFIG — שנה לכתובת ה-Worker שלך
+══════════════════════════════ */
+const API = 'https://YOUR-WORKER.YOUR-SUBDOMAIN.workers.dev';
+
+const TRACKS = [
+  { id:'english',     name:'אנגלית בטעמים',              emoji:'🌍' },
+  { id:'plasticine',  name:'פלסטלינה',                   emoji:'🎨' },
+  { id:'digital',     name:'חקר דיגיטלי – מסביב לעולם', emoji:'🌐' },
+  { id:'taekwondo',   name:'טקוואנדו',                   emoji:'🥋' },
+  { id:'embroidery',  name:'רקמה אומנותית',              emoji:'🧵' },
+  { id:'garden',      name:'גינה מעצימה',                emoji:'🌱' },
+  { id:'tabletennis', name:'טניס שולחן',                 emoji:'🏓' },
+  { id:'electronics', name:'אלקטרוניקה',                 emoji:'⚡' },
+  { id:'media',       name:'תקשורת',                     emoji:'📡' },
+  { id:'medicine',    name:'ניצני רפואה',                emoji:'🩺' },
+];
+const MAX = 5;
+
+let counts = {};          // { trackId: number }
+let allRegistrations = [];// from /report
+let selected = null;
+let submitting = false;
+let pollTimer = null;
+
+/* ── BUILD TRACK CARDS ── */
+const grid = document.getElementById('tracksGrid');
+TRACKS.forEach(t => {
+  const c = document.createElement('div');
+  c.id = 'card-' + t.id;
+  c.className = 'card';
+  c.innerHTML = `
+    <span class="card-icon">${t.emoji}</span>
+    <h3>${t.name}</h3>
+    <div class="prog"><div class="prog-fill" id="prog-${t.id}" style="width:0%"></div></div>
+    <p class="card-count" id="count-${t.id}">0 / ${MAX}</p>
+  `;
+  c.onclick = () => pick(t.id);
+  grid.appendChild(c);
+});
+
+function pick(id) {
+  if (submitting) return;
+  if ((counts[id] || 0) >= MAX) return;
+  selected = id;
+  TRACKS.forEach(t => {
+    document.getElementById('card-' + t.id).classList.toggle('selected', t.id === id);
+  });
+  refreshSubmit();
+}
+
+/* ── REFRESH UI FROM counts ── */
+function applyCountsToCards() {
+  TRACKS.forEach(t => {
+    const n = counts[t.id] || 0;
+    const pct = (n / MAX) * 100;
+    const card = document.getElementById('card-' + t.id);
+    const fill = document.getElementById('prog-' + t.id);
+    const countEl = document.getElementById('count-' + t.id);
+    fill.style.width = pct + '%';
+    fill.classList.toggle('full', n >= MAX);
+    countEl.textContent = `${n} / ${MAX}`;
+    const locked = n >= MAX;
+    card.classList.toggle('locked', locked);
+    // badge
+    let badge = card.querySelector('.card-full-badge');
+    if (locked) {
+      if (!badge) { badge = document.createElement('div'); badge.className='card-full-badge'; badge.textContent='מלא'; card.appendChild(badge); }
+    } else { badge && badge.remove(); }
+    if (locked && selected === t.id) { selected = null; card.classList.remove('selected'); }
+  });
+  refreshSubmit();
+}
+
+function refreshSubmit() {
+  const name = document.getElementById('managerName').value.trim();
+  const school = document.getElementById('schoolName').value.trim();
+  document.getElementById('submitBtn').disabled = !name || !school || !selected || submitting;
+}
+
+document.getElementById('managerName').addEventListener('input', refreshSubmit);
+document.getElementById('schoolName').addEventListener('input', refreshSubmit);
+
+/* ── RECENTS ── */
+function renderRecents() {
+  const sec = document.getElementById('recentsSection');
+  const list = document.getElementById('recentsList');
+  if (!allRegistrations.length) { sec.style.display = 'none'; return; }
+  sec.style.display = '';
+  const recent = [...allRegistrations].reverse().slice(0, 8);
+  list.innerHTML = recent.map(r => {
+    const t = TRACKS.find(tr => tr.id === r.track_id);
+    return `<div class="rec-item">${t?.emoji || ''} <strong>${r.manager_name}</strong> — ${r.school_name} → <span class="rec-track">${r.track_name}</span></div>`;
+  }).join('');
+}
+
+/* ── TOAST ── */
+function toast(msg, type='ok') {
+  const wrap = document.getElementById('toast-wrap');
+  const d = document.createElement('div');
+  d.className = 'toast ' + type;
+  d.textContent = msg;
+  wrap.appendChild(d);
+  setTimeout(() => d.remove(), 4000);
+}
+
+/* ── SUBMIT ── */
+document.getElementById('submitBtn').onclick = async () => {
+  const name   = document.getElementById('managerName').value.trim();
+  const school = document.getElementById('schoolName').value.trim();
+  const track  = TRACKS.find(t => t.id === selected);
+  if (!name || !school || !track) return;
+
+  submitting = true;
+  const btn = document.getElementById('submitBtn');
+  btn.textContent = '⏳ שולח...';
+  btn.disabled = true;
+
+  try {
+    const res = await fetch(API + '/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ manager_name: name, school_name: school, track_id: track.id, track_name: track.name }),
+    });
+    const data = await res.json();
+
+    if (res.ok) {
+      toast(`✅ ${name} נרשמ/ה למגמת ${track.name}`);
+      document.getElementById('managerName').value = '';
+      document.getElementById('schoolName').value = '';
+      selected = null;
+      TRACKS.forEach(t => document.getElementById('card-' + t.id).classList.remove('selected'));
+      await loadAll();
+    } else if (data.error === 'track_full') {
+      toast('המגמה מלאה – בחרו מגמה אחרת', 'err');
+    } else {
+      toast('שגיאה בשליחה, נסו שוב', 'err');
+    }
+  } catch {
+    toast('בעיית תקשורת, בדקו חיבור', 'err');
+  }
+
+  submitting = false;
+  btn.textContent = 'שליחת הבחירה';
+  refreshSubmit();
+};
+
+/* ── LOAD DATA ── */
+async function loadAll() {
+  try {
+    const [cRes, rRes] = await Promise.all([
+      fetch(API + '/counts'),
+      fetch(API + '/report'),
+    ]);
+    const cData = await cRes.json();
+    const rData = await rRes.json();
+
+    counts = {};
+    (cData.counts || []).forEach(r => { counts[r.track_id] = r.count; });
+    allRegistrations = rData.registrations || [];
+
+    applyCountsToCards();
+    renderRecents();
+    renderReport();
+  } catch {
+    console.warn('לא ניתן לטעון נתונים');
+  }
+}
+
+/* ══════════════════════════════
+   REPORT
+══════════════════════════════ */
+function renderReport() {
+  const container = document.getElementById('reportCards');
+  const total = allRegistrations.length;
+  const full = TRACKS.filter(t => (counts[t.id] || 0) >= MAX).length;
+  document.getElementById('statTotal').textContent = total;
+  document.getElementById('statFull').textContent = full;
+  document.getElementById('statOpen').textContent = TRACKS.length - full;
+  document.getElementById('reportDate').textContent =
+    'עודכן: ' + new Date().toLocaleString('he-IL', { dateStyle:'medium', timeStyle:'short' });
+
+  container.innerHTML = TRACKS.map(t => {
+    const members = allRegistrations.filter(r => r.track_id === t.id);
+    const n = members.length;
+    const isFull = n >= MAX;
+
+    const managersHTML = members.length ? members.map((m, i) => {
+      const dt = new Date(m.created_at);
+      const timeStr = dt.toLocaleTimeString('he-IL', { hour:'2-digit', minute:'2-digit' });
+      return `
+        <div class="manager-row">
+          <div class="manager-num">${i + 1}</div>
+          <div style="flex:1">
+            <div class="manager-name">${m.manager_name}</div>
+            <div class="manager-school">🏫 ${m.school_name}</div>
+          </div>
+          <div class="manager-time">${timeStr}</div>
+        </div>`;
+    }).join('') : `<div class="empty-track">אין רישומים עדיין</div>`;
+
+    return `
+      <div class="track-report">
+        <div class="track-report-header">
+          <span class="icon">${t.emoji}</span>
+          <div class="info">
+            <h3>${t.name}</h3>
+            <p>${n} מתוך ${MAX} מנהלים נרשמו</p>
+          </div>
+          <span class="track-badge ${isFull ? 'full' : ''}">${isFull ? '🔴 מלא' : `${MAX - n} מקומות`}</span>
+        </div>
+        <div class="track-prog-wrap">
+          <div class="track-prog-bar">
+            <div class="track-prog-fill ${isFull ? 'full' : ''}" style="width:${(n/MAX)*100}%"></div>
+          </div>
+        </div>
+        <div class="managers-list">${managersHTML}</div>
+      </div>`;
+  }).join('');
+}
+
+/* ── PAGE SWITCHING ── */
+function showPage(p) {
+  document.getElementById('page-register').style.display = p === 'register' ? '' : 'none';
+  document.getElementById('page-report').style.display = p === 'report' ? '' : 'none';
+  document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', (i === 0) === (p === 'register')));
+  if (p === 'report') renderReport();
+}
+
+/* ── POLLING כל 10 שניות ── */
+function startPolling() {
+  loadAll();
+  pollTimer = setInterval(loadAll, 10000);
+}
+
+startPolling();
+</script>
+</body>
+</html>
