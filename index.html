@@ -481,21 +481,40 @@ function renderReport() {
 
 /* ── PAGE SWITCHING ── */
 function showPage(p) {
-  document.getElementById('page-register').style.display = p === 'register' ? '' : 'none';
-  document.getElementById('page-report').style.display = p === 'report' ? '' : 'none';
-  if (p === 'report') loadAll().then(() => renderReport());
+  document.getElementById('page-register').style.display = p === 'register' ? 'block' : 'none';
+  document.getElementById('page-report').style.display = p === 'report' ? 'block' : 'none';
+  if (p === 'report') {
+    loadAll().then(() => {
+      renderReport();
+    }).catch(() => {
+      toast('שגיאה בטעינת הדוח', 'err');
+    });
+  }
 }
 
 /* ── RESET ── */
-function resetApp() {
-  if (!confirm('לאפס את כל הבחירות? הפעולה תנקה את הטופס ותחזיר לדף הרישום.')) return;
-  document.getElementById('managerName').value = '';
-  document.getElementById('schoolName').value = '';
-  selected = null;
-  TRACKS.forEach(t => document.getElementById('card-' + t.id).classList.remove('selected'));
-  showPage('register');
-  refreshSubmit();
-  toast('האתר אופס בהצלחה ✨', 'ok');
+async function resetApp() {
+  if (!confirm('האם לאפס את כל הרישומים והנתונים?')) return;
+  try {
+    const res = await fetch(API + '/reset', { method: 'POST' });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || 'Reset failed');
+
+    document.getElementById('managerName').value = '';
+    document.getElementById('schoolName').value = '';
+    selected = null;
+    allRegistrations = [];
+    counts = {};
+    TRACKS.forEach(t => document.getElementById('card-' + t.id).classList.remove('selected'));
+
+    await loadAll();
+    showPage('register');
+    refreshSubmit();
+    toast('כל הנתונים אופסו בהצלחה ✨', 'ok');
+  } catch (err) {
+    console.error(err);
+    toast('האיפוס נכשל – בדקו שה-Worker תומך ב-/reset', 'err');
+  }
 }
 
 /* ── POLLING כל 10 שניות ── */
