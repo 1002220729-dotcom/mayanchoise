@@ -140,25 +140,27 @@ header p{color:var(--muted);font-size:1.05rem}
   background:#e0f0ff;color:var(--blue-dk);
 }
 .track-badge.full{background:#fee2e2;color:#991b1b}
-.track-prog-wrap{padding:0 20px 0;margin-bottom:0}
-.track-prog-bar{height:6px;background:#eef4fb;border-radius:99px;overflow:hidden;margin:10px 0}
-.track-prog-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--blue),var(--teal));transition:width .8s ease}
-.track-prog-fill.full{background:linear-gradient(90deg,#e63757,#ff6b6b)}
 
-.managers-list{padding:12px 20px 16px}
-.manager-row{
-  display:flex;align-items:center;gap:12px;
-  padding:10px 0;border-bottom:1px solid #f0f5fb;
+/* ── COMPACT TABLE ── */
+.report-table{width:100%;border-collapse:collapse}
+.report-table th{
+  background:#f0f6ff;color:var(--muted);font-size:.75rem;font-weight:700;
+  padding:8px 14px;text-align:right;border-bottom:1px solid var(--border);
 }
-.manager-row:last-child{border-bottom:none}
-.manager-num{
-  width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--teal));
-  color:#fff;font-size:.75rem;font-weight:800;display:grid;place-items:center;flex-shrink:0;
+.report-table td{
+  padding:9px 14px;font-size:.85rem;color:var(--text);
+  border-bottom:1px solid #f0f5fb;vertical-align:middle;
 }
-.manager-name{font-weight:800;font-size:.9rem;color:var(--text);flex:1}
-.manager-school{font-size:.8rem;color:var(--muted)}
-.manager-time{font-size:.72rem;color:#aab8c8}
-.empty-track{text-align:center;padding:18px;color:var(--muted);font-size:.85rem}
+.report-table tr:last-child td{border-bottom:none}
+.report-table tr:hover td{background:#f8fbff}
+.row-num{
+  width:24px;height:24px;border-radius:50%;
+  background:linear-gradient(135deg,var(--blue),var(--teal));
+  color:#fff;font-size:.7rem;font-weight:800;
+  display:inline-grid;place-items:center;
+}
+.td-time{color:#aab8c8;font-size:.75rem;white-space:nowrap}
+.empty-track{text-align:center;padding:16px;color:var(--muted);font-size:.85rem}
 
 /* print button */
 .print-btn{
@@ -445,19 +447,16 @@ function renderReport() {
     const n = members.length;
     const isFull = n >= MAX;
 
-    const managersHTML = members.length ? members.map((m, i) => {
+    const rows = members.length ? members.map((m, i) => {
       const dt = new Date(m.created_at);
       const timeStr = dt.toLocaleTimeString('he-IL', { hour:'2-digit', minute:'2-digit' });
-      return `
-        <div class="manager-row">
-          <div class="manager-num">${i + 1}</div>
-          <div style="flex:1">
-            <div class="manager-name">${m.manager_name}</div>
-            <div class="manager-school">🏫 ${m.school_name}</div>
-          </div>
-          <div class="manager-time">${timeStr}</div>
-        </div>`;
-    }).join('') : `<div class="empty-track">אין רישומים עדיין</div>`;
+      return `<tr>
+        <td><span class="row-num">${i + 1}</span></td>
+        <td><strong>${m.manager_name}</strong></td>
+        <td>🏫 ${m.school_name}</td>
+        <td class="td-time">${timeStr}</td>
+      </tr>`;
+    }).join('') : `<tr><td colspan="4" class="empty-track">אין רישומים עדיין</td></tr>`;
 
     return `
       <div class="track-report">
@@ -465,16 +464,14 @@ function renderReport() {
           <span class="icon">${t.emoji}</span>
           <div class="info">
             <h3>${t.name}</h3>
-            <p>${n} מתוך ${MAX} מנהלים נרשמו</p>
+            <p>${n} / ${MAX} מנהלים נרשמו</p>
           </div>
-          <span class="track-badge ${isFull ? 'full' : ''}">${isFull ? '🔴 מלא' : `${MAX - n} מקומות`}</span>
+          <span class="track-badge ${isFull ? 'full' : ''}">${isFull ? '🔴 מלא' : `${MAX - n} מקומות פנויים`}</span>
         </div>
-        <div class="track-prog-wrap">
-          <div class="track-prog-bar">
-            <div class="track-prog-fill ${isFull ? 'full' : ''}" style="width:${(n/MAX)*100}%"></div>
-          </div>
-        </div>
-        <div class="managers-list">${managersHTML}</div>
+        <table class="report-table">
+          ${members.length ? '<thead><tr><th>#</th><th>שם המנהל/ת</th><th>בית ספר</th><th>שעה</th></tr></thead>' : ''}
+          <tbody>${rows}</tbody>
+        </table>
       </div>`;
   }).join('');
 }
